@@ -26,10 +26,11 @@ def signup():
     hashed_password = generate_password_hash(password)
 
     if db_operations.check_email_exists(email):
-        return jsonify({'message': 'Email already exists. Please log in.'}), 400
+        return jsonify({'message': 'Email already exists.'}), 400
 
     db_operations.create_customer(name, email, phone, hashed_password)
     return jsonify({'message': 'Signup successful'}), 201
+
 
 @routes.route('/login', methods=['POST'])
 def login():
@@ -44,6 +45,10 @@ def login():
     if not user or not check_password_hash(user[4], password):
         return jsonify({'message': 'Invalid credentials'}), 401
 
-    token = jwt.encode({'email': email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)},
-                       os.getenv("JWT_SECRET"))  # Change this to your secret key
-    return jsonify({'token': token.decode('UTF-8')}), 200
+    token = jwt.encode(
+        {
+            'email': email,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=int(os.getenv("JWT_EXPIRE_TIME")))
+        }, os.getenv("JWT_SECRET"))
+
+    return jsonify({'access_token': token}), 200
