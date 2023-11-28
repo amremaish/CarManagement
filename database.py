@@ -60,3 +60,4 @@ class DatabaseManager:
     def close_connection(self):
         self.mydb.close()
 
+db_operations = DatabaseManager()
