@@ -49,10 +49,14 @@ class DatabaseManager:
         else:
             return False
 
-    def get_customer_by_email(self, email):
+    def get_customer_id_by_email(self, email):
         query = "SELECT * FROM customers WHERE email = %s"
         self.mycursor.execute(query, (email,))
-        return self.mycursor.fetchone()
+        result = self.mycursor.fetchone()
+        if result:
+            return result[self.mycursor.column_names.index('id')]
+        else:
+            return None
 
     def check_availability(self, vehicle_id, date_hired, date_returned):
         self.mycursor.execute('''SELECT * FROM bookings

@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from database import db_operations
 
 load_dotenv()
-routes = Blueprint('routes', __name__)
+auth_routes = Blueprint('routes', __name__)
 
 
 @routes.route('/signup', methods=['POST'])
