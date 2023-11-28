@@ -1,10 +1,14 @@
-from flask import Blueprint, request, jsonify
-from werkzeug.security import generate_password_hash, check_password_hash
+import os
 import jwt
 import datetime
 
+from dotenv import load_dotenv
+from flask import Blueprint, request, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from database import db_operations
 
+load_dotenv()
 routes = Blueprint('routes', __name__)
 
 
@@ -41,5 +45,5 @@ def login():
         return jsonify({'message': 'Invalid credentials'}), 401
 
     token = jwt.encode({'email': email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)},
-                       'your_secret_key_for_jwt')  # Change this to your secret key
+                       os.getenv("JWT_SECRET"))  # Change this to your secret key
     return jsonify({'token': token.decode('UTF-8')}), 200
