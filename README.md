@@ -6,6 +6,10 @@ This repository contains the code for a Car Rental Management System, providing 
 
 The system includes endpoints to manage customers, vehicles, and bookings. It offers functionalities accessible via HTTP requests.
 
+## Database Diagram
+
+![Database Diagram](screenshot/diagram.png)
+
 ## Getting Started
 
 Follow these steps to set up and run the project:
@@ -13,7 +17,7 @@ Follow these steps to set up and run the project:
 1. Clone this repository.
 2. Install the required dependencies using `pip install -r requirements.txt`.
 3. Set up the database and configure environment variables in `.env`.
-4. Run the application with `python app.py`.
+4. Run the application with `python -m flask run`.
 
 ## Endpoints
 
@@ -94,4 +98,23 @@ Follow these steps to set up and run the project:
     }' http://your_domain/admin/vehicles/<vehicle_id>
     ```
 
-- **Delete Vehicle by ID
+- **Delete Vehicle by ID**: Delete a vehicle by ID (Admin access required).
+    ```bash
+    curl -X DELETE -H "Authorization: Bearer <access_token>" http://your_domain/admin/vehicles/<vehicle_id>
+    ```
+
+### Booking Routes
+
+- **Make Booking**: Make a vehicle booking (Authenticated customer access required).
+    ```bash
+    curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer <access_token>" -d '{
+        "vehicle_id": <vehicle_id>,
+        "date_hired": "YYYY-MM-DD",
+        "date_returned": "YYYY-MM-DD"
+    }' http://your_domain/make_booking
+    ```
+
+## Usage Instructions
+
+- Ensure correct payload format for requests.
+- Authenticate using obtained access tokens.
