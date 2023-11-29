@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-
+from flask_jwt_extended import jwt_required, get_jwt_identity, JWTManager
 from database import db_operations
 import datetime
 
@@ -10,9 +9,9 @@ booking_routes = Blueprint('booking_routes', __name__)
 @booking_routes.route('/make_booking', methods=['POST'])
 @jwt_required()
 def make_booking():
-    current_customer_email = get_jwt_identity()
-    customer = db_operations.get_customer_by_email(current_customer_email)
-    if not customer:
+    current_user_email = get_jwt_identity()
+    user = db_operations.get_user_by_email(current_user_email)
+    if not user:
         return jsonify({'message': 'Customer not found or unauthorized'}), 401
 
     data = request.get_json()
@@ -40,7 +39,7 @@ def make_booking():
     if db_operations.check_availability(vehicle_id, date_hired, date_returned):
         return jsonify({'message': 'Vehicle is not available for the selected dates'}), 400
 
-    customer_id = db_operations.get_customer_id_by_email(current_customer_email)
+    customer_id = db_operations.get_user_id_by_email(current_user_email)
 
     db_operations.insert_booking(customer_id, vehicle_id, date_hired.date(), date_returned.date())
     return jsonify({'message': 'Booking successful'})

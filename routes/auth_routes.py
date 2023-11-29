@@ -1,9 +1,6 @@
-import os
-import jwt
-import datetime
-
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from database import db_operations
@@ -12,7 +9,7 @@ load_dotenv()
 auth_routes = Blueprint('routes', __name__)
 
 
-@routes.route('/signup', methods=['POST'])
+@auth_routes.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
     name = data.get('name')
@@ -28,11 +25,11 @@ def signup():
     if db_operations.check_email_exists(email):
         return jsonify({'message': 'Email already exists.'}), 400
 
-    db_operations.create_customer(name, email, phone, hashed_password)
+    db_operations.create_user(name, email, phone, hashed_password)
     return jsonify({'message': 'Signup successful'}), 201
 
 
-@routes.route('/login', methods=['POST'])
+@auth_routes.route('/login', methods=['POST'])
 def login():
     auth = request.get_json()
     email = auth.get('email')
@@ -41,14 +38,9 @@ def login():
     if not email or not password:
         return jsonify({'message': 'Missing email or password'}), 400
 
-    user = db_operations.get_customer_by_email(email)
+    user = db_operations.get_user_by_email(email)
     if not user or not check_password_hash(user[4], password):
         return jsonify({'message': 'Invalid credentials'}), 401
 
-    token = jwt.encode(
-        {
-            'email': email,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=int(os.getenv("JWT_EXPIRE_TIME")))
-        }, os.getenv("JWT_SECRET"))
-
-    return jsonify({'access_token': token}), 200
+    access_token = create_access_token(identity=email)
+    return jsonify({'access_token': access_token}), 200
