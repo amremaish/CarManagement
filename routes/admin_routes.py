@@ -80,6 +80,9 @@ def delete_customer(customer_id):
     return jsonify({'message': 'Customer deleted'}), 200
 
 
+ALLOWED_VEHICLE_TYPES = ['small_cars', 'family_cars', 'vans']
+
+
 @vehicle_routes.route('/admin/vehicles', methods=['POST'])
 @jwt_required()
 def create_vehicle():
@@ -90,11 +93,28 @@ def create_vehicle():
     vehicle_type = data.get('type')
     available = data.get('available')
 
-    if not all([vehicle_type, available]):
-        return jsonify({'message': 'Missing information'}), 400
+    if vehicle_type not in ALLOWED_VEHICLE_TYPES or available is None:
+        return jsonify({'message': 'Invalid or missing information for vehicle creation'}), 400
 
     db_operations.create_vehicle(vehicle_type, available)
     return jsonify({'message': 'Vehicle created'}), 201
+
+
+@vehicle_routes.route('/admin/vehicles/<int:vehicle_id>', methods=['PUT'])
+@jwt_required()
+def update_vehicle(vehicle_id):
+    if not is_admin():
+        return jsonify({'message': 'Unauthorized access'}), 403
+
+    data = request.get_json()
+    vehicle_type = data.get('type')
+    available = data.get('available')
+
+    if vehicle_type not in ALLOWED_VEHICLE_TYPES or available is None:
+        return jsonify({'message': 'Invalid or missing information for vehicle update'}), 400
+
+    db_operations.update_vehicle(vehicle_id, vehicle_type, available)
+    return jsonify({'message': 'Vehicle updated'}), 200
 
 
 @vehicle_routes.route('/admin/vehicles/<int:vehicle_id>', methods=['GET'])
@@ -108,23 +128,6 @@ def get_vehicle_by_id(vehicle_id):
         return jsonify({'message': 'Vehicle not found'}), 404
 
     return jsonify({'vehicle': vehicle}), 200
-
-
-@vehicle_routes.route('/admin/vehicles/<int:vehicle_id>', methods=['PUT'])
-@jwt_required()
-def update_vehicle(vehicle_id):
-    if not is_admin():
-        return jsonify({'message': 'Unauthorized access'}), 403
-
-    data = request.get_json()
-    vehicle_type = data.get('type')
-    available = data.get('available')
-
-    if not all([vehicle_type, available]):
-        return jsonify({'message': 'Missing information'}), 400
-
-    db_operations.update_vehicle(vehicle_id, vehicle_type, available)
-    return jsonify({'message': 'Vehicle updated'}), 200
 
 
 @vehicle_routes.route('/admin/vehicles/<int:vehicle_id>', methods=['DELETE'])
