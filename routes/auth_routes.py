@@ -38,8 +38,9 @@ def login():
     if not email or not password:
         return jsonify({'message': 'Missing email or password'}), 400
 
-    user = db_operations.get_user_by_email(email)
-    if not user or not check_password_hash(user[4], password):
+    user, cols = db_operations.get_user_by_email(email)
+
+    if not user or not check_password_hash(user[cols.index('password')], password):
         return jsonify({'message': 'Invalid credentials'}), 401
 
     access_token = create_access_token(identity=email)

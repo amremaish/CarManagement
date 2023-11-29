@@ -53,14 +53,69 @@ class DatabaseManager:
     def get_user_by_email(self, email):
         query = "SELECT * FROM users WHERE email = %s"
         self.mycursor.execute(query, (email,))
-        return self.mycursor.fetchone()
+        return self.mycursor.fetchone(), self.mycursor.column_names
 
-    def get_user_id_by_email(self, email):
-        result = self.get_user_by_email(email)
-        if result:
-            return result[self.mycursor.column_names.index('id')]
+    def get_user_by_id(self, user_id):
+        query = "SELECT * FROM users WHERE id = %s"
+        self.mycursor.execute(query, (user_id,))
+        user = self.mycursor.fetchone()
+        if user:
+            user_info = {
+                'id': user[0],
+                'name': user[1],
+                'email': user[2],
+                'phone': user[3],
+                'is_admin': user[5]
+            }
+            return user_info
         else:
             return None
+
+    def update_customer(self, customer_id, name, email, phone, password):
+        update_query = '''
+            UPDATE users
+            SET name = %s, email = %s, phone = %s, password = %s
+            WHERE id = %s
+        '''
+        values = (name, email, phone, password, customer_id)
+        try:
+            self.mycursor.execute(update_query, values)
+            self.mydb.commit()
+        except mysql.connector.Error as err:
+            print("Error updating customer:", err)
+            self.mydb.rollback()
+
+    def delete_customer(self, customer_id):
+        delete_query = "DELETE FROM user WHERE id = %s"
+        try:
+            self.mycursor.execute(delete_query, (customer_id,))
+            self.mydb.commit()
+        except mysql.connector.Error as err:
+            print("Error deleting customer:", err)
+            self.mydb.rollback()
+
+    def get_vehicle_by_id(self, vehicle_id):
+        query = "SELECT * FROM vehicles WHERE id = %s"
+        self.mycursor.execute(query, (vehicle_id,))
+        return self.mycursor.fetchone()
+
+    def create_vehicle(self, vehicle_type, available):
+        sql = "INSERT INTO vehicles (type, available) VALUES (%s, %s)"
+        val = (vehicle_type, available)
+        self.mycursor.execute(sql, val)
+        self.mydb.commit()
+
+    def update_vehicle(self, vehicle_id, vehicle_type, available):
+        sql = "UPDATE vehicles SET type = %s, available = %s WHERE id = %s"
+        val = (vehicle_type, available, vehicle_id)
+        self.mycursor.execute(sql, val)
+        self.mydb.commit()
+
+    def delete_vehicle(self, vehicle_id):
+        sql = "DELETE FROM vehicles WHERE id = %s"
+        val = (vehicle_id,)
+        self.mycursor.execute(sql, val)
+        self.mydb.commit()
 
     def check_availability(self, vehicle_id, date_hired, date_returned):
         self.mycursor.execute('''SELECT * FROM bookings

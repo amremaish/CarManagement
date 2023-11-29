@@ -10,7 +10,7 @@ booking_routes = Blueprint('booking_routes', __name__)
 @jwt_required()
 def make_booking():
     current_user_email = get_jwt_identity()
-    user = db_operations.get_user_by_email(current_user_email)
+    user, cols = db_operations.get_user_by_email(current_user_email)
     if not user:
         return jsonify({'message': 'Customer not found or unauthorized'}), 401
 
@@ -39,7 +39,5 @@ def make_booking():
     if db_operations.check_availability(vehicle_id, date_hired, date_returned):
         return jsonify({'message': 'Vehicle is not available for the selected dates'}), 400
 
-    customer_id = db_operations.get_user_id_by_email(current_user_email)
-
-    db_operations.insert_booking(customer_id, vehicle_id, date_hired.date(), date_returned.date())
+    db_operations.insert_booking(user[cols.index('id')], vehicle_id, date_hired.date(), date_returned.date())
     return jsonify({'message': 'Booking successful'})

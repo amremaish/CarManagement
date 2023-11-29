@@ -5,16 +5,14 @@ from werkzeug.security import generate_password_hash
 from database import db_operations
 
 admin_routes = Blueprint('admin_routes', __name__)
+vehicle_routes = Blueprint('vehicle_routes', __name__)
 
 
-# Helper function to check if the current user is an admin
 def is_admin():
-    current_user = get_jwt_identity()
-    # Replace this logic with your actual admin check logic based on the user role or any other criterion.
-    return current_user.get('role') == 'admin' if current_user else False
+    user, cols = db_operations.get_user_by_email(get_jwt_identity())
+    return user[cols.index('is_admin')] == 1
 
 
-# Admin route for creating a customer (POST /admin/customers)
 @admin_routes.route('/admin/customers', methods=['POST'])
 @jwt_required()
 def create_customer():
@@ -39,21 +37,19 @@ def create_customer():
     return jsonify({'message': 'Customer created'}), 201
 
 
-# Admin route for getting all customers (GET /admin/customers)
-@admin_routes.route('/admin/customers', methods=['GET'])
+@admin_routes.route('/admin/customers/<int:customer_id>', methods=['GET'])
 @jwt_required()
-def get_all_customers():
+def get_customer_by_id(customer_id):
     if not is_admin():
         return jsonify({'message': 'Unauthorized access'}), 403
 
-    customers = db_operations.get_all_customers()
-    if not customers:
-        return jsonify({'message': 'No customers found'}), 404
+    customer = db_operations.get_user_by_id(customer_id)
+    if not customer:
+        return jsonify({'message': 'Customer not found'}), 404
 
-    return jsonify({'customers': customers}), 200
+    return jsonify({'customer': customer}), 200
 
 
-# Admin route for updating a customer by ID (PUT /admin/customers/<customer_id>)
 @admin_routes.route('/admin/customers/<int:customer_id>', methods=['PUT'])
 @jwt_required()
 def update_customer(customer_id):
@@ -74,7 +70,6 @@ def update_customer(customer_id):
     return jsonify({'message': 'Customer updated'}), 200
 
 
-# Admin route for deleting a customer by ID (DELETE /admin/customers/<customer_id>)
 @admin_routes.route('/admin/customers/<int:customer_id>', methods=['DELETE'])
 @jwt_required()
 def delete_customer(customer_id):
@@ -84,8 +79,59 @@ def delete_customer(customer_id):
     db_operations.delete_customer(customer_id)
     return jsonify({'message': 'Customer deleted'}), 200
 
-# Similarly, implement CRUD routes for vehicles following a similar structure as above for customers.
-# ...
 
-# Add this blueprint to your app
-# app.register_blueprint(admin_routes)
+@vehicle_routes.route('/admin/vehicles', methods=['POST'])
+@jwt_required()
+def create_vehicle():
+    if not is_admin():
+        return jsonify({'message': 'Unauthorized access'}), 403
+
+    data = request.get_json()
+    vehicle_type = data.get('type')
+    available = data.get('available')
+
+    if not all([vehicle_type, available]):
+        return jsonify({'message': 'Missing information'}), 400
+
+    db_operations.create_vehicle(vehicle_type, available)
+    return jsonify({'message': 'Vehicle created'}), 201
+
+
+@vehicle_routes.route('/admin/vehicles/<int:vehicle_id>', methods=['GET'])
+@jwt_required()
+def get_vehicle_by_id(vehicle_id):
+    if not is_admin():
+        return jsonify({'message': 'Unauthorized access'}), 403
+
+    vehicle = db_operations.get_vehicle_by_id(vehicle_id)
+    if not vehicle:
+        return jsonify({'message': 'Vehicle not found'}), 404
+
+    return jsonify({'vehicle': vehicle}), 200
+
+
+@vehicle_routes.route('/admin/vehicles/<int:vehicle_id>', methods=['PUT'])
+@jwt_required()
+def update_vehicle(vehicle_id):
+    if not is_admin():
+        return jsonify({'message': 'Unauthorized access'}), 403
+
+    data = request.get_json()
+    vehicle_type = data.get('type')
+    available = data.get('available')
+
+    if not all([vehicle_type, available]):
+        return jsonify({'message': 'Missing information'}), 400
+
+    db_operations.update_vehicle(vehicle_id, vehicle_type, available)
+    return jsonify({'message': 'Vehicle updated'}), 200
+
+
+@vehicle_routes.route('/admin/vehicles/<int:vehicle_id>', methods=['DELETE'])
+@jwt_required()
+def delete_vehicle(vehicle_id):
+    if not is_admin():
+        return jsonify({'message': 'Unauthorized access'}), 403
+
+    db_operations.delete_vehicle(vehicle_id)
+    return jsonify({'message': 'Vehicle deleted'}), 200
