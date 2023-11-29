@@ -17,12 +17,13 @@ class DatabaseManager:
 
     def create_tables(self):
         # Create tables if they don't exist
-        self.mycursor.execute('''CREATE TABLE IF NOT EXISTS customers (
+        self.mycursor.execute('''CREATE TABLE IF NOT EXISTS users (
                                 id INT AUTO_INCREMENT PRIMARY KEY,
                                 name VARCHAR(255),
                                 email VARCHAR(255),
                                 phone VARCHAR(20),
-                                password VARCHAR(255))''')
+                                password VARCHAR(255),
+                                is_admin BOOLEAN DEFAULT FALSE)''')
 
         self.mycursor.execute('''CREATE TABLE IF NOT EXISTS vehicles (
                                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -31,28 +32,31 @@ class DatabaseManager:
 
         self.mycursor.execute('''CREATE TABLE IF NOT EXISTS bookings (
                                 id INT AUTO_INCREMENT PRIMARY KEY,
-                                customer_id INT,
+                                user_id INT,
                                 vehicle_id INT,
                                 date_hired DATE,
                                 date_returned DATE,
                                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                FOREIGN KEY(customer_id) REFERENCES customers(id),
+                                FOREIGN KEY(user_id) REFERENCES users(id),
                                 FOREIGN KEY(vehicle_id) REFERENCES vehicles(id))''')
 
         self.mydb.commit()
 
     def check_email_exists(self, email):
-        self.mycursor.execute("SELECT * FROM customers WHERE email = %s", (email,))
+        self.mycursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         result = self.mycursor.fetchone()
         if result:
             return True
         else:
             return False
 
-    def get_customer_id_by_email(self, email):
-        query = "SELECT * FROM customers WHERE email = %s"
+    def get_user_by_email(self, email):
+        query = "SELECT * FROM users WHERE email = %s"
         self.mycursor.execute(query, (email,))
-        result = self.mycursor.fetchone()
+        return self.mycursor.fetchone()
+
+    def get_user_id_by_email(self, email):
+        result = self.get_user_by_email(email)
         if result:
             return result[self.mycursor.column_names.index('id')]
         else:
@@ -66,17 +70,17 @@ class DatabaseManager:
                               (vehicle_id, date_hired, date_returned, date_hired, date_returned))
         return self.mycursor.fetchone()
 
-    def create_customer(self, name, email, phone, password):
-        sql = "INSERT INTO customers (name, email, phone, password) VALUES (%s, %s, %s, %s)"
+    def create_user(self, name, email, phone, password):
+        sql = "INSERT INTO users (name, email, phone, password) VALUES (%s, %s, %s, %s)"
         val = (name, email, phone, password)
         self.mycursor.execute(sql, val)
         self.mydb.commit()
         return self.mycursor.lastrowid
 
-    def insert_booking(self, customer_id, vehicle_id, date_hired, date_returned):
-        self.mycursor.execute('''INSERT INTO bookings (customer_id, vehicle_id, date_hired, date_returned)
+    def insert_booking(self, user_id, vehicle_id, date_hired, date_returned):
+        self.mycursor.execute('''INSERT INTO bookings (user_id, vehicle_id, date_hired, date_returned)
                                 VALUES (%s, %s, %s, %s)''',
-                              (customer_id, vehicle_id, date_hired, date_returned))
+                              (user_id, vehicle_id, date_hired, date_returned))
         self.mydb.commit()
 
     def close_connection(self):
