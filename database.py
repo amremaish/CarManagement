@@ -132,6 +132,18 @@ class DatabaseManager:
         self.mydb.commit()
         return self.mycursor.lastrowid
 
+    def get_bookings_for_day(self, date):
+        query = "SELECT * FROM bookings WHERE DATE(created_at) = %s"
+        self.mycursor.execute(query, (date,))
+        bookings = self.mycursor.fetchall()
+        columns = [i[0] for i in self.mycursor.description]
+        result = []
+
+        for booking in bookings:
+            booking_dict = dict(zip(columns, booking))
+            result.append(booking_dict)
+        return result
+
     def insert_booking(self, user_id, vehicle_id, date_hired, date_returned):
         self.mycursor.execute('''INSERT INTO bookings (user_id, vehicle_id, date_hired, date_returned)
                                 VALUES (%s, %s, %s, %s)''',

@@ -4,7 +4,7 @@ from database import db_operations
 
 
 def generate_report():
-    today = datetime.now().date()
+    today = datetime.now().date().strftime('%Y-%m-%d')
     bookings = db_operations.get_bookings_for_day(today)
 
     print(f"Bookings for {today}:")
